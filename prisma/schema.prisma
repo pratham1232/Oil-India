@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+}
+
+model Well {
+  id          String   @id @default(cuid())
+  name        String
+  latitude    Float
+  longitude   Float
+  status      String   // e.g., "Active", "Inactive"
+  createdAt   DateTime @default(now())
+  events      HistoricalEvent[]
+  documents   Document[]
+  riskAlerts  RiskAlert[]
+}
+
+model HistoricalEvent {
+  id          String   @id @default(cuid())
+  wellId      String
+  well        Well     @relation(fields: [wellId], references: [id])
+  description String
+  date        DateTime
+  severity    String   // e.g., "Low", "Medium", "High"
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  wellId      String
+  well        Well     @relation(fields: [wellId], references: [id])
+  type        String   // e.g., "WCR", "DDR", "Mud Log"
+  title       String
+  content     String   @db.Text
+  uploadedAt  DateTime @default(now())
+  // In a real pgvector setup, we would use unsupported("vector(1536)")
+  // embedding   Unsupported("vector(1536)")?
+}
+
+model RiskAlert {
+  id          String   @id @default(cuid())
+  wellId      String
+  well        Well     @relation(fields: [wellId], references: [id])
+  riskScore   Float
+  reason      String
+  createdAt   DateTime @default(now())
+}
